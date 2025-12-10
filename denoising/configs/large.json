@@ -1,0 +1,16 @@
+{
+    "width": 16,
+    "middle_block_num": 4,
+    "encoder_block_nums": [
+        2,
+        2,
+        4,
+        8
+    ],
+    "decoder_block_nums": [
+        2,
+        2,
+        2,
+        2
+    ]
+}
