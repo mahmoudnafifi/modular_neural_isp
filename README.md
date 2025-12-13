@@ -18,13 +18,20 @@ On top of this modular neural ISP, we developed a user-interactive photo-editing
 
 🔗 **[Paper](https://arxiv.org/abs/2512.08564)**
 
+---
 
+## 🆕 News
 
+- **Executable binaries are now available** for the interactive photo-editing tool.  
+  You can download pre-built standalone executables from [here](gui).
+  
 ---
 
 ## 🛠️ Installation
 
-You can set up the environment using Conda or venv:
+To run the **standalone executable** without a Python setup, see **[`here`](gui)**.
+
+Otherwise, you can set up the environment using Conda or venv:
 
 ### Option 1: Using Conda (recommended)
 
