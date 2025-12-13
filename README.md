@@ -30,7 +30,7 @@ On top of this modular neural ISP, we developed a user-interactive photo-editing
 
 ## 🛠️ Installation
 
-To run the **standalone executable** without a Python setup, see **[`here`](gui)**.
+To run the standalone executable without a Python setup, see [`here`](gui).
 
 Otherwise, you can set up the environment using Conda or venv:
 
