@@ -36,5 +36,43 @@ To run the tool in full-screen mode, add `--full-screen`.
 
 ---
 
+## 📦 Download Executables
+
+Pre-built standalone executables of the photo-editing tool are available.  
+Each package includes **all required dependencies** and runs **without installing Python or external libraries**.
+
+### Versions
+**v0.1.0 (Beta)**
+
+<div align="center">
+
+| Platform | Distributed File | Download Link | Size |
+|----------|------------------|---------------|------|
+| **Windows (64-bit)** | `PhotoEditingTool-v0.1.0-win64.zip` | [📥 Download](https://drive.google.com/file/d/1mU-QjsNUH9SJ-EygelGvenVQCxVsY4D1/view?usp=sharing) | 2.4 GB |
+| **macOS** | — | *Coming soon* | — |
+| **Linux** | — | *Coming soon* | — |
+
+</div>
+
+
+
+
+### ▶️ How to Run (Windows)
+
+1. Download `PhotoEditingTool-vx.x.x-win64.zip`
+2. Extract the zip file
+3. Open the extracted folder
+4. Double-click `PhotoEditingTool.exe`
+
+> 💡 If Windows SmartScreen appears, click **More info → Run anyway**.
+
+### 📝 Notes
+
+- This is a **beta release** intended for research and evaluation.
+- The package is large because it bundle deep learning models, PyTorch runtime, and all required native dependencies.
+- Some optional features (e.g., EXIF metadata extraction) may be skipped automatically if unavailable.
+
+---
+
 ### ✉️ Inquiries
 For inquiries about the photo-editing tool, please contact Mahmoud Afifi (m.3afifi@gmail.com)
