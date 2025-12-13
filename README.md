@@ -23,7 +23,8 @@ On top of this modular neural ISP, we developed a user-interactive photo-editing
 ## 🆕 News
 
 - **Executable binaries are now available** for the interactive photo-editing tool.  
-  You can download pre-built standalone executables from [here](gui).
+  You can download pre-built standalone executables from [here](gui).  
+  * **2025-12-12**: Windows (64-bit) - v0.1.0 (Beta)
   
 ---
 
