@@ -2,6 +2,17 @@
 
 #### **[Mahmoud Afifi](https://www.mafifi.info/), [Zhongling Wang](https://ece.uwaterloo.ca/~z2228wan/), [Ran Zhang](https://www.linkedin.com/in/ran-zhang-48b85021/), and [Michael S. Brown](http://www.cse.yorku.ca/~mbrown/)**
 
+---
+
+## 🆕 News
+
+- **Executable binaries are now available** for the interactive photo-editing tool.  
+  You can download pre-built standalone executables from [here](gui).  
+  * **2025-12-12**: Windows (64-bit) - v0.1.0 (Beta)
+  * **2025-12-14**: macOS (Apple Silicon) - v0.1.0 (Beta)
+  
+---
+
 <p align="center">
   <a href="https://www.youtube.com/watch?v=ByhQjQSjxVM" target="_blank">
     <img src="https://img.youtube.com/vi/ByhQjQSjxVM/maxresdefault.jpg" width="100%" />
@@ -18,15 +29,6 @@ On top of this modular neural ISP, we developed a user-interactive photo-editing
 
 🔗 **[Paper](https://arxiv.org/abs/2512.08564)**
 
----
-
-## 🆕 News
-
-- **Executable binaries are now available** for the interactive photo-editing tool.  
-  You can download pre-built standalone executables from [here](gui).  
-  * **2025-12-12**: Windows (64-bit) - v0.1.0 (Beta)
-  * **2025-12-14**: macOS (Apple Silicon) - v0.1.0 (Beta)
-  
 ---
 
 ## 🛠️ Installation
