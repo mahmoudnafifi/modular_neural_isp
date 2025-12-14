@@ -70,17 +70,24 @@ Each package includes **all required dependencies** and runs **without installin
 > 💡 If Windows SmartScreen appears, click **More info → Run anyway**.
 
 #### macOS
+
 1. Download `PhotoEditingTool-vx.x.x-macos-arm64.zip`
 2. Extract the zip file
 3. Open the extracted folder
 4. Double-click `Launch_PhotoEditingTool.command`
 
 > 💡 On first run, macOS Gatekeeper may block execution.  
-> Right-click the file → **Open** → **Open** to confirm.
+> Right-click the file → Open → Open to confirm.
 
-> 💡 A Terminal window may briefly appear when launching the app.  
+> 💡 If macOS reports that the file cannot be executed, open Terminal in the folder and run:
+> ```bash
+> chmod +x Launch_PhotoEditingTool.command
+> ```
+
+> 💡 A Terminal window may appear and remain open briefly before the GUI is shown.  
 > This is expected for the beta version.
-> 
+
+
 ### 📝 Notes
 
 - This is a beta release intended for research and evaluation.
