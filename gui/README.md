@@ -46,18 +46,21 @@ Each package includes **all required dependencies** and runs **without installin
 
 <div align="center">
 
-| Platform | Distributed File | Download Link | Size |
-|----------|------------------|---------------|------|
-| **Windows (64-bit)** | `PhotoEditingTool-v0.1.0-win64.zip` | [📥 Download](https://drive.google.com/file/d/1mU-QjsNUH9SJ-EygelGvenVQCxVsY4D1/view?usp=sharing) | 2.4 GB |
-| **macOS** | — | *Coming soon* | — |
-| **Linux** | — | *Coming soon* | — |
+| Platform | Package | Download | Size | Notes |
+|----------|---------|----------|------|-------|
+| Windows (64-bit) | `PhotoEditingTool-v0.1.0-win64.zip` | [📥 Download](https://drive.google.com/file/d/1mU-QjsNUH9SJ-EygelGvenVQCxVsY4D1/view?usp=sharing) | 2.4 GB | Primary development platform |
+| macOS (Apple Silicon) | `PhotoEditingTool-v0.1.0-macos-arm64.zip` | [📥 Download](https://drive.google.com/file/d/19GVPmfVjTFLSG-ezsSKDjuPspApSRubF/view?usp=sharing) | 244 MB | MPS supported, not performance-optimized |
+| Linux | — | Coming soon | — | — |
 
 </div>
 
 
 
 
-### ▶️ How to Run (Windows)
+
+### ▶️ How to Run 
+
+#### Windows
 
 1. Download `PhotoEditingTool-vx.x.x-win64.zip`
 2. Extract the zip file
@@ -66,11 +69,27 @@ Each package includes **all required dependencies** and runs **without installin
 
 > 💡 If Windows SmartScreen appears, click **More info → Run anyway**.
 
+#### macOS
+1. Download `PhotoEditingTool-vx.x.x-macos-arm64.zip`
+2. Extract the zip file
+3. Open the extracted folder
+4. Double-click `Launch_PhotoEditingTool.command`
+
+> 💡 On first run, macOS Gatekeeper may block execution.  
+> Right-click the file → **Open** → **Open** to confirm.
+
+> 💡 A Terminal window may briefly appear when launching the app.  
+> This is expected for the beta version.
+> 
 ### 📝 Notes
 
-- This is a **beta release** intended for research and evaluation.
-- The package is large because it bundle deep learning models, PyTorch runtime, and all required native dependencies.
+- This is a beta release intended for research and evaluation.
+- The package is large because it bundles deep learning models, the PyTorch runtime, and required native dependencies.
 - Some optional features (e.g., EXIF metadata extraction) may be skipped automatically if unavailable.
+- Tested on macOS Sonoma (Apple Silicon) and expected to work on recent macOS versions.
+- The macOS build is not yet performance-optimized, and runtime performance may differ from Windows/Linux.
+- Platform-specific performance optimizations may be explored in future releases.
+
 
 ---
 
