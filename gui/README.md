@@ -84,6 +84,11 @@ Each package includes **all required dependencies** and runs **without installin
 > chmod +x Launch_PhotoEditingTool.command
 > ```
 
+> 💡 If macOS reports that the app is "damaged" or cannot be opened, run:
+> ```bash
+> xattr -dr com.apple.quarantine .
+> ```
+
 > 💡 A Terminal window may appear and remain open briefly before the GUI is shown.  
 > This is expected for the beta version.
 
