@@ -48,9 +48,11 @@ Each package includes **all required dependencies** and runs **without installin
 
 | Platform | Package | Download | Size | Notes |
 |----------|---------|----------|------|-------|
-| Windows (64-bit) | `PhotoEditingTool-v0.1.0-win64.zip` | [📥 Download](https://drive.google.com/file/d/1mU-QjsNUH9SJ-EygelGvenVQCxVsY4D1/view?usp=sharing) | 2.4 GB | Primary development platform |
-| macOS (Apple Silicon) | `PhotoEditingTool-v0.1.0-macos-arm64.zip` | [📥 Download](https://drive.google.com/file/d/19GVPmfVjTFLSG-ezsSKDjuPspApSRubF/view?usp=sharing) | 244 MB | MPS supported, not performance-optimized |
-| Linux | — | Coming soon | — | — |
+| **Windows (64-bit)** | `PhotoEditingTool-v0.1.0-win64.zip` | [📥 Download](https://drive.google.com/file/d/1mU-QjsNUH9SJ-EygelGvenVQCxVsY4D1/view?usp=sharing) | 2.4 GB | Primary development platform. Custom AWB is not available in the prebuilt binary — run the source code if custom AWB functionality is needed. |
+| **macOS (Apple Silicon)** | `PhotoEditingTool-v0.1.0-macos-arm64.zip` | [📥 Download](https://drive.google.com/file/d/19GVPmfVjTFLSG-ezsSKDjuPspApSRubF/view?usp=sharing) | 244 MB | MPS supported, **not performance-optimized**. Custom AWB is not available in the prebuilt binary — run the source code if needed. |
+| **Linux** | — | Coming soon | — | — |
+
+
 
 </div>
 
@@ -97,10 +99,13 @@ Each package includes **all required dependencies** and runs **without installin
 
 - This is a beta release intended for research and evaluation.
 - The package is large because it bundles deep learning models, the PyTorch runtime, and required native dependencies.
-- Some optional features (e.g., EXIF metadata extraction) may be skipped automatically if unavailable.
+- Some features (e.g., EXIF metadata extraction) may be skipped automatically if unavailable.
+- When running on CPU, performance is expected to be slow. For a better experience, GPU acceleration is recommended.
+- To speed up execution, you can disable the refinement step of local tone mapping and use standard local tone mapping (`Settings → Local Tone Mapping → Standard`).
 - Tested on macOS Sonoma (Apple Silicon) and expected to work on recent macOS versions.
-- The macOS build is not yet performance-optimized, and runtime performance may differ from Windows/Linux.
+- The macOS build is not yet performance-optimized, and runtime performance may be slower than on Windows/Linux.
 - Platform-specific performance optimizations may be explored in future releases.
+
 
 
 ---
