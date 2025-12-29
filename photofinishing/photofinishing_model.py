@@ -1164,11 +1164,21 @@ class PhotofinishingModule(nn.Module):
   @staticmethod
   def apply_tm(x: torch.Tensor, a: torch.Tensor, b: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
     """Applies tone mapping."""
+    orig_device = x.device
+    run_on_cpu = orig_device.type == 'mps'
+    if run_on_cpu:
+      x = x.detach().cpu()
+      a = a.detach().cpu()
+      b = b.detach().cpu()
+      c = c.detach().cpu()
+
     x_clamped = x.clamp(EPS, 1.0 - EPS)
     x_a = PhotofinishingModule.safe_pow(x_clamped, a)
     one_minus_x = (1.0 - x_clamped).clamp(EPS, 1.0)
     denom = x_a + PhotofinishingModule.safe_pow(c * one_minus_x, b)
     x_tm = x_a / (denom + EPS)
+    if run_on_cpu:
+      x_tm = x_tm.to(orig_device)
     return x_tm
 
   @staticmethod
@@ -1200,4 +1210,5 @@ class PhotofinishingModule(nn.Module):
     grid = torch.clamp(cbcr, -0.5, 0.5) * 2
     grid = grid.permute(0, 2, 3, 1)
     return F.grid_sample(lut2d, grid, mode='bilinear', align_corners=True)
+
 
