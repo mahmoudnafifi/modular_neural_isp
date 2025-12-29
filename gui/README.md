@@ -25,11 +25,7 @@ To launch the tool, run:
 python run_photo_editing_tool.py
 ```
 
-If you are running from the repository root, use:
 
-```bash
-python gui/run_photo_editing_tool.py
-```
 
 To run the tool in full-screen mode, add `--full-screen`. 
 
