@@ -520,11 +520,15 @@ class PipeLine(nn.Module):
     if shadow_amount:
       assert -1 <= shadow_amount <= 1.0
 
-    if target_cct:
-      assert CCT_MIN <= target_cct <= CCT_MAX
+    apple_pro_raw = (img_metadata.get('as_shot_neutral')  is not None and
+                     np.allclose(img_metadata.get('as_shot_neutral') , [1.0, 1.0, 1.0]))
+    # Apple ProRAW produces unreliable CCT/Tint values; skip validation
+    if not apple_pro_raw:
+      if target_cct:
+        assert CCT_MIN <= target_cct <= CCT_MAX
 
-    if target_tint:
-      assert TINT_MIN <= target_tint <= TINT_MAX
+      if target_tint:
+        assert TINT_MIN <= target_tint <= TINT_MAX
 
     if illum is None:
       if use_cc_awb or not self._is_s24:
@@ -1892,6 +1896,7 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
 
 
