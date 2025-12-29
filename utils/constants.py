@@ -37,7 +37,7 @@ elif os_name == 'Darwin':
 else:
   EXIFTOOL_PATH = '/usr/bin/exiftool'  # Update accordingly
 
-VERSION = 'v0.1.2-beta'
+VERSION = 'v0.1.3-beta'
 
 EPS = 0.00000001
 
@@ -287,5 +287,6 @@ ABOUT_MESSAGE = (
     '• Raghav Goyal – denoiser experiments\n\n'
     'Inquiries: Mahmoud Afifi (m.3afifi@gmail.com)'
 )
+
 
 
