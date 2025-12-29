@@ -652,7 +652,7 @@ class PipeLine(nn.Module):
       if abs(target_tint / TINT_SCALE) > 5 and awb_user_pref:
         target_tint = 5 * TINT_SCALE
       illum = raw_rgb_from_cct_tint(target_cct, target_tint, xyz2cam1, xyz2cam2, calib_illum_1, calib_illum_2)
-      illum = self._to_tensor(illum).to(dtype=raw.dtype, device=raw.device)
+      illum = self._to_tensor(illum.astype(np.float32)).to(dtype=raw.dtype, device=raw.device)
     else:
       target_cct, target_tint = None, None
 
@@ -1891,4 +1891,5 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
