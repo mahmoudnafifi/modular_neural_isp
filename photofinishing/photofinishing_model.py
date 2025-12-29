@@ -26,6 +26,31 @@ from typing import Optional, Union, Dict
 import time
 from utils.constants import *
 
+
+_MPS_GRID_SAMPLE_SUPPORTED = None
+
+def mps_supports_grid_sample_3d():
+  global _MPS_GRID_SAMPLE_SUPPORTED
+  if _MPS_GRID_SAMPLE_SUPPORTED is not None:
+    return _MPS_GRID_SAMPLE_SUPPORTED
+
+  if not (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()):
+    _MPS_GRID_SAMPLE_SUPPORTED = False
+    return False
+
+  try:
+    # minimal 3D grid_sample probe
+    x = torch.zeros(1, 1, 2, 2, 2, device="mps")
+    grid = torch.zeros(1, 1, 1, 1, 3, device="mps")
+    F.grid_sample(x, grid, align_corners=True)
+    _MPS_GRID_SAMPLE_SUPPORTED = True
+  except NotImplementedError:
+    _MPS_GRID_SAMPLE_SUPPORTED = False
+  except RuntimeError:
+    _MPS_GRID_SAMPLE_SUPPORTED = False
+
+  return _MPS_GRID_SAMPLE_SUPPORTED
+  
 class MultiBranchConvBlock(nn.Module):
   """Multi-branch conv block with dilation and depthwise convs."""
   def __init__(self, channels: int, act_func: nn.Module):
@@ -411,7 +436,11 @@ class LocalToneMappingNet(nn.Module):
     grid_h = grid_h.expand(b, -1, -1).unsqueeze(1)
     grid_w = grid_w.expand(b, -1, -1).unsqueeze(1)
     coords = torch.cat([grid_w, grid_h, guide], dim=1).permute(0, 2, 3, 1).unsqueeze(1)
-    return F.grid_sample(grid, coords, align_corners=True, padding_mode='border').squeeze(2)
+    if grid.device.type == 'mps' and not mps_supports_grid_sample_3d():
+      out = F.grid_sample(grid.cpu(), coords.cpu(), align_corners=True, padding_mode='border').to(device)
+    else:
+        out = F.grid_sample(grid, coords, align_corners=True, padding_mode='border')
+    return out.squeeze(2)
 
 class GlobalToneMappingNet(nn.Module):
   """Neural network for predicting global tone-mapping coefficients."""
@@ -1171,3 +1200,4 @@ class PhotofinishingModule(nn.Module):
     grid = torch.clamp(cbcr, -0.5, 0.5) * 2
     grid = grid.permute(0, 2, 3, 1)
     return F.grid_sample(lut2d, grid, mode='bilinear', align_corners=True)
+
