@@ -16,6 +16,7 @@ This file contains model architecture for photofinishing module.
 """
 import sys
 import os
+
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 
 import torch
@@ -27,34 +28,27 @@ import time
 from utils.constants import *
 
 
-_MPS_GRID_SAMPLE_SUPPORTED = None
+def run_on_cpu_if_mps(*tensors):
+  """If any tensor is on MPS, move all tensors to CPU and return (run_on_cpu, cpu_tensors)."""
+  run_on_cpu = any(
+    torch.is_tensor(t) and t.device.type == 'mps'
+    for t in tensors
+  )
+  if not run_on_cpu:
+    return False, tensors
+  cpu_tensors = tuple(
+    t.detach().cpu() if torch.is_tensor(t) else t
+    for t in tensors
+  )
+  return True, cpu_tensors
 
-def mps_supports_grid_sample_3d():
-  global _MPS_GRID_SAMPLE_SUPPORTED
-  if _MPS_GRID_SAMPLE_SUPPORTED is not None:
-    return _MPS_GRID_SAMPLE_SUPPORTED
 
-  if not (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()):
-    _MPS_GRID_SAMPLE_SUPPORTED = False
-    return False
-
-  try:
-    # minimal 3D grid_sample probe
-    x = torch.zeros(1, 1, 2, 2, 2, device="mps")
-    grid = torch.zeros(1, 1, 1, 1, 3, device="mps")
-    F.grid_sample(x, grid, align_corners=True)
-    _MPS_GRID_SAMPLE_SUPPORTED = True
-  except NotImplementedError:
-    _MPS_GRID_SAMPLE_SUPPORTED = False
-  except RuntimeError:
-    _MPS_GRID_SAMPLE_SUPPORTED = False
-
-  return _MPS_GRID_SAMPLE_SUPPORTED
-  
 class MultiBranchConvBlock(nn.Module):
   """Multi-branch conv block with dilation and depthwise convs."""
+
   def __init__(self, channels: int, act_func: nn.Module):
     super().__init__()
+
     def depthwise_branch(kernel_size: int, dilation: int) -> nn.Sequential:
       pad = dilation * (kernel_size // 2)
       return nn.Sequential(
@@ -69,6 +63,7 @@ class MultiBranchConvBlock(nn.Module):
         ),
         act_func.__class__(*act_func.parameters())
       )
+
     self._branch1 = depthwise_branch(kernel_size=3, dilation=1)
     self._branch2 = depthwise_branch(kernel_size=3, dilation=2)
     self._branch3 = depthwise_branch(kernel_size=5, dilation=1)
@@ -79,9 +74,11 @@ class MultiBranchConvBlock(nn.Module):
     out = self._fuse(out)
     return out
 
+
 class CoordinateAttention(nn.Module):
   """Coordinate Attention for Efficient Mobile Network Design."""
-  def __init__(self, in_channels: int, act_func: nn.Module, reduction: Optional[int]=4):
+
+  def __init__(self, in_channels: int, act_func: nn.Module, reduction: Optional[int] = 4):
     super().__init__()
     reduced_channels = max(8, in_channels // reduction)
     self._pool_h = nn.AdaptiveAvgPool2d((None, 1))
@@ -107,10 +104,13 @@ class CoordinateAttention(nn.Module):
     out = x * a_h * a_w
     return out
 
+
 class LuTNet(nn.Module):
   """Neural network for predicting the CbCr chroma lookup table (LuT)."""
-  def __init__(self, act_func: nn.Module, lut_size: Optional[int]=CBCR_LUT_SIZE,
-               input_size: Optional[int]=LUT_NET_INPUT_SIZE, bottleneck_dim: Optional[int]=LUT_NET_BOTTLENECK_CHANNELS):
+
+  def __init__(self, act_func: nn.Module, lut_size: Optional[int] = CBCR_LUT_SIZE,
+               input_size: Optional[int] = LUT_NET_INPUT_SIZE,
+               bottleneck_dim: Optional[int] = LUT_NET_BOTTLENECK_CHANNELS):
     super().__init__()
     self._lut_size = lut_size
     self._input_size = input_size
@@ -179,7 +179,6 @@ class LuTNet(nn.Module):
       nn.Sigmoid()
     )
 
-
   def get_cbcr_lut_size(self) -> int:
     """Returns CbCr LuT number of bins."""
     return self._lut_size
@@ -216,7 +215,6 @@ class LuTNet(nn.Module):
     lut = self._out(d3)
     return self._base_lut.expand(b, -1, -1, -1) + lut
 
-
   @staticmethod
   def _differentiable_cbcr_histogram(cbcr, bins=CBCR_LUT_SIZE, min_val=-0.5, max_val=0.5, sigma=0.075):
     """Computes differentiable CbCr histogram."""
@@ -246,8 +244,10 @@ class LuTNet(nn.Module):
     grid = torch.stack([mesh_cb, mesh_cr], dim=0).unsqueeze(0)
     return grid
 
+
 class MultiScaleGuidanceNet(nn.Module):
   """Multi-scale guidance network."""
+
   def __init__(self, base_channels, act_func):
     super().__init__()
     self._base_channels = base_channels
@@ -286,12 +286,14 @@ class MultiScaleGuidanceNet(nn.Module):
     g_high = self._guide_conv_high(x)
     return self._fusion(torch.cat([g_low, g_mid, g_high], dim=1))
 
+
 class LocalToneMappingNet(nn.Module):
   """Neural network for predicting local tone-mapping coefficients."""
+
   def __init__(self, act_func: nn.Module, base_channels: Optional[int] = LTM_NET_BASE_CHANNELS,
-               num_coeffs: Optional[int]=5,
-               grid_depth: Optional[int]=LTM_GRID_DEPTH, grid_size: Optional[int]=LTM_GRID_SIZE,
-               input_size: Optional[int]=LTM_NET_INPUT_SIZE):
+               num_coeffs: Optional[int] = 5,
+               grid_depth: Optional[int] = LTM_GRID_DEPTH, grid_size: Optional[int] = LTM_GRID_SIZE,
+               input_size: Optional[int] = LTM_NET_INPUT_SIZE):
     super().__init__()
     self._grid_size = grid_size
     self._grid_depth = grid_depth
@@ -328,31 +330,39 @@ class LocalToneMappingNet(nn.Module):
 
   @staticmethod
   def _bilateral_solver(guide: torch.Tensor, coeff_map: torch.Tensor,
-                       k: Optional[int] = 7, sigma_spatial: Optional[float] = 3.0, sigma_luma: Optional[float] = 0.01,
-                       lam: Optional[float] = 1e-3, n_iter: Optional[int] = BILATERAL_SOLVER_ITERS,
+                        k: Optional[int] = 7, sigma_spatial: Optional[float] = 3.0, sigma_luma: Optional[float] = 0.01,
+                        lam: Optional[float] = 1e-3, n_iter: Optional[int] = BILATERAL_SOLVER_ITERS,
                         omega: Optional[float] = 1.6):
-    """GPU-accelerated bilateral solver."""
+    """GPU-accelerated bilateral solver (runs fully on CPU if MPS is detected)."""
+
+    orig_device = coeff_map.device
+    run_on_cpu = (orig_device.type == 'mps')
+
+    if run_on_cpu:
+      guide = guide.detach().cpu()
+      coeff_map = coeff_map.detach().cpu()
+
     if guide.shape[1] == 3:
-        guide = 0.2989 * guide[:,0:1] + 0.5870 * guide[:,1:2] + 0.1140 * guide[:,2:3]
+      guide = 0.2989 * guide[:, 0:1] + 0.5870 * guide[:, 1:2] + 0.1140 * guide[:, 2:3]
 
     b, c, h, w = coeff_map.shape
     pad = k // 2
     device = coeff_map.device
-    dtype  = coeff_map.dtype
+    dtype = coeff_map.dtype
 
     # pre-computed bilateral weights (fixed for all iterations).
     guide_p = F.pad(guide, (pad, pad, pad, pad), mode='reflect')
     neigh_guide = F.unfold(guide_p, kernel_size=k, padding=0).view(b, 1, k * k, h, w)
     center_guide = guide.unsqueeze(2)
     diff2 = (neigh_guide - center_guide).pow(2)
-    range_w = torch.exp(-diff2 / (2 * (sigma_luma**2)))
+    range_w = torch.exp(-diff2 / (2 * (sigma_luma ** 2)))
     yy, xx = torch.meshgrid(
-        torch.arange(-pad, pad+1, device=device, dtype=dtype),
-        torch.arange(-pad, pad+1, device=device, dtype=dtype),
-        indexing="ij"
+      torch.arange(-pad, pad + 1, device=device, dtype=dtype),
+      torch.arange(-pad, pad + 1, device=device, dtype=dtype),
+      indexing="ij"
     )
-    spatial = torch.exp(-(xx**2 + yy**2) / (2 * (sigma_spatial**2)))
-    spatial = spatial.reshape(1, 1, k*k, 1, 1)
+    spatial = torch.exp(-(xx ** 2 + yy ** 2) / (2 * (sigma_spatial ** 2)))
+    spatial = spatial.reshape(1, 1, k * k, 1, 1)
     w_b = range_w * spatial
     w_b = w_b / w_b.sum(dim=2, keepdim=True).clamp_min(EPS)
     out = coeff_map.clone()
@@ -364,6 +374,10 @@ class LocalToneMappingNet(nn.Module):
       smooth = (neigh_coeff * w_b).sum(dim=2)
       target = (lam * coeff_map + smooth) * inv_alpha
       out = out + omega * (target - out)
+
+    if run_on_cpu:
+      out = out.to(orig_device)
+
     return out
 
   def _forward_training_mode(self, x: torch.Tensor, x_gtm: torch.Tensor) -> torch.Tensor:
@@ -381,7 +395,8 @@ class LocalToneMappingNet(nn.Module):
     return a_map
 
   def forward(self, x: torch.Tensor, x_gtm: torch.Tensor, post_process_ltm: Optional[bool] = False,
-              solver_iter: Optional[int] = BILATERAL_SOLVER_ITERS, training_mode: Optional[bool]=False) -> torch.Tensor:
+              solver_iter: Optional[int] = BILATERAL_SOLVER_ITERS,
+              training_mode: Optional[bool] = False) -> torch.Tensor:
     if training_mode:
       return self._forward_training_mode(x=x, x_gtm=x_gtm)
     if post_process_ltm:
@@ -396,7 +411,7 @@ class LocalToneMappingNet(nn.Module):
           x_s, x_gtm_s = x, x_gtm
         guide_s = self._blur_tensor(self._guide_conv(x_s[:, 0:1, ...]))
         x_in_s = torch.cat([x_s, x_gtm_s], dim=1)
-        x_ds_s = F.interpolate(x_in_s, size=(self._input_size, self._input_size),mode='bilinear', align_corners=True)
+        x_ds_s = F.interpolate(x_in_s, size=(self._input_size, self._input_size), mode='bilinear', align_corners=True)
         grid_s = self._grid_net(self._blur_tensor(x_ds_s))
         grid_s = grid_s.view(-1, self._num_coeffs, self._grid_depth, self._grid_size, self._grid_size)
         a_map_s = self._bilateral_slice(grid_s, guide_s)
@@ -406,7 +421,7 @@ class LocalToneMappingNet(nn.Module):
       a_map = sum(coeffs) / len(coeffs)
       with torch.no_grad():
         a_map = self._bilateral_solver(guide=x, coeff_map=a_map, k=7, sigma_spatial=3.0, sigma_luma=0.008,
-                                      lam=5e-4, n_iter=solver_iter, omega=1.6)
+                                       lam=5e-4, n_iter=solver_iter, omega=1.6)
     else:
       y = x[:, 0:1, ...]
       guide = self._guide_conv(y)
@@ -428,6 +443,7 @@ class LocalToneMappingNet(nn.Module):
 
   @staticmethod
   def _bilateral_slice(grid: torch.Tensor, guide: torch.Tensor) -> torch.Tensor:
+    run_on_cpu, (grid, guide) = run_on_cpu_if_mps(grid, guide)
     b = grid.shape[0]
     device = guide.device
     h = torch.linspace(-1, 1, guide.shape[2], device=device)
@@ -436,16 +452,17 @@ class LocalToneMappingNet(nn.Module):
     grid_h = grid_h.expand(b, -1, -1).unsqueeze(1)
     grid_w = grid_w.expand(b, -1, -1).unsqueeze(1)
     coords = torch.cat([grid_w, grid_h, guide], dim=1).permute(0, 2, 3, 1).unsqueeze(1)
-    if grid.device.type == 'mps' and not mps_supports_grid_sample_3d():
-      out = F.grid_sample(grid.cpu(), coords.cpu(), align_corners=True, padding_mode='border').to(device)
-    else:
-        out = F.grid_sample(grid, coords, align_corners=True, padding_mode='border')
-    return out.squeeze(2)
+    out = F.grid_sample(grid, coords, align_corners=True, padding_mode='border').squeeze(2)
+    if run_on_cpu:
+      out = out.to('mps')
+    return out
+
 
 class GlobalToneMappingNet(nn.Module):
   """Neural network for predicting global tone-mapping coefficients."""
-  def __init__(self, act_func: nn.Module, input_size: Optional[int]=GTM_NET_INPUT_SIZE,
-               base_channels: Optional[int]=GTM_NET_BASE_CHANNELS):
+
+  def __init__(self, act_func: nn.Module, input_size: Optional[int] = GTM_NET_INPUT_SIZE,
+               base_channels: Optional[int] = GTM_NET_BASE_CHANNELS):
     super().__init__()
     self._input_size = input_size
     self._base_channels = base_channels
@@ -477,14 +494,15 @@ class GlobalToneMappingNet(nn.Module):
     total_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
     return total_params
 
-
   def forward(self, x: torch.Tensor) -> torch.Tensor:
     """Return global tone mapping parameters (B, 3)."""
     x_thumb = F.interpolate(x, size=(self._input_size, self._input_size), mode='bilinear', align_corners=True)
     return self._gtm_net(x_thumb)
 
+
 class BaseNet(nn.Module):
   """Base network for estimating digital gain and gamma coefficients."""
+
   def __init__(self, act_func: nn.Module, input_size: int, base_channels: int):
     super().__init__()
     self._net = nn.Sequential(
@@ -508,10 +526,12 @@ class BaseNet(nn.Module):
     """Forward function."""
     return self._net(x)
 
+
 class GainNet(nn.Module):
   """Neural network for predicting digital gain scale."""
-  def __init__(self, act_func: nn.Module, input_size: Optional[int]=GAIN_NET_INPUT_SIZE,
-               base_channels: Optional[int]=GAIN_NET_BASE_CHANNELS,
+
+  def __init__(self, act_func: nn.Module, input_size: Optional[int] = GAIN_NET_INPUT_SIZE,
+               base_channels: Optional[int] = GAIN_NET_BASE_CHANNELS,
                gain_min: Optional[float] = GAIN_MIN, gain_max: Optional[float] = GAIN_MAX):
     super().__init__()
     self._input_size = input_size
@@ -521,12 +541,10 @@ class GainNet(nn.Module):
     self._act_func = act_func
     self._gain_net = BaseNet(act_func=self._act_func, input_size=self._input_size, base_channels=self._base_channels)
 
-
   def get_num_of_params(self) -> int:
     """Returns total number of parameters."""
     total_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
     return total_params
-
 
   def forward(self, x: torch.Tensor) -> torch.Tensor:
     x = F.interpolate(x, size=(self._input_size, self._input_size), mode='bilinear', align_corners=True)
@@ -534,11 +552,13 @@ class GainNet(nn.Module):
     gain_factor = self._gain_min + (self._gain_max - self._gain_min) * gain_scale
     return gain_factor.view(-1, 1, 1, 1)
 
+
 class GammaNet(nn.Module):
   """Neural network for predicting the gamma correction coefficient."""
-  def __init__(self, act_func: nn.Module, input_size: Optional[int]=GAMMA_NET_INPUT_SIZE,
-               base_channels: Optional[int]=GAMMA_NET_BASE_CHANNELS,
-               gamma_min: Optional[float]=GAMMA_MIN, gamma_max: Optional[float]=GAMMA_MAX):
+
+  def __init__(self, act_func: nn.Module, input_size: Optional[int] = GAMMA_NET_INPUT_SIZE,
+               base_channels: Optional[int] = GAMMA_NET_BASE_CHANNELS,
+               gamma_min: Optional[float] = GAMMA_MIN, gamma_max: Optional[float] = GAMMA_MAX):
     super().__init__()
     self._input_size = input_size
     self._gamma_min = gamma_min
@@ -552,7 +572,6 @@ class GammaNet(nn.Module):
     total_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
     return total_params
 
-
   def forward(self, x: torch.Tensor) -> torch.Tensor:
     x = F.interpolate(x, size=(self._input_size, self._input_size), mode='bilinear', align_corners=True)
     gamma_scale = self._gamma_net(x)
@@ -562,6 +581,7 @@ class GammaNet(nn.Module):
 
 class RGB3DLUT(nn.Module):
   """RGB 3D Lookup table."""
+
   def __init__(self, lut_size: Optional[int] = RGB_LUT_SIZE):
     super().__init__()
     self._lut_size = lut_size
@@ -580,9 +600,11 @@ class RGB3DLUT(nn.Module):
   def get_num_of_params(self):
     return self._lut.numel()
 
+
 class PhotofinishingModule(nn.Module):
   """Photofinishing module."""
-  def __init__(self, device: Optional[torch.device] = torch.device('cuda'), use_3d_lut: Optional[bool]=False):
+
+  def __init__(self, device: Optional[torch.device] = torch.device('cuda'), use_3d_lut: Optional[bool] = False):
     super().__init__()
     self._act = nn.LeakyReLU(negative_slope=0.01, inplace=True)
     self._lut_size = CBCR_LUT_SIZE
@@ -609,8 +631,8 @@ class PhotofinishingModule(nn.Module):
     return t * t
 
   @staticmethod
-  def _adjust_shadows(ycbcr: torch.Tensor, amount: float, thresh: Optional[float]=0.3, eps: Optional[float]=0.1
-                     ) -> torch.Tensor:
+  def _adjust_shadows(ycbcr: torch.Tensor, amount: float, thresh: Optional[float] = 0.3, eps: Optional[float] = 0.1
+                      ) -> torch.Tensor:
     """Lift or deepen shadows.
 
     Args:
@@ -633,8 +655,8 @@ class PhotofinishingModule(nn.Module):
     return torch.cat([y_adj, cb, cr], dim=1)
 
   @staticmethod
-  def _adjust_highlights(ycbcr: torch.Tensor, amount, thresh: Optional[float]=0.7, eps: Optional[float]=0.1
-                        ) -> torch.Tensor:
+  def _adjust_highlights(ycbcr: torch.Tensor, amount, thresh: Optional[float] = 0.7, eps: Optional[float] = 0.1
+                         ) -> torch.Tensor:
     """Compress or boost highlights.
 
     Args:
@@ -823,18 +845,17 @@ class PhotofinishingModule(nn.Module):
     output['output'] = x_srgb_out
     return output
 
-
-  def forward(self, x_lsrgb: torch.Tensor, return_intermediate: Optional[bool]=False,
-              post_process_ltm: Optional[bool]=False, report_time: Optional[bool]=False,
-              training_mode: Optional[bool]=False, solver_iter: Optional[int]=BILATERAL_SOLVER_ITERS,
-              contrast_amount: Optional[float]=0.0, vibrance_amount: Optional[float]=0.0,
-              saturation_amount: Optional[float]=0.0, highlight_amount: Optional[float]=0.0,
-              shadow_amount: Optional[float]=0.0, input_gain_factor: Optional[torch.Tensor]=None,
-              input_gtm_params: Optional[torch.Tensor]=None, input_ltm_params: Optional[torch.Tensor]=None,
-              input_chroma_lut: Optional[torch.Tensor]=None, input_gamma_factor: Optional[torch.Tensor]=None,
-              return_params: Optional[bool]=True, gain_blending_weight: Optional[float] = None,
+  def forward(self, x_lsrgb: torch.Tensor, return_intermediate: Optional[bool] = False,
+              post_process_ltm: Optional[bool] = False, report_time: Optional[bool] = False,
+              training_mode: Optional[bool] = False, solver_iter: Optional[int] = BILATERAL_SOLVER_ITERS,
+              contrast_amount: Optional[float] = 0.0, vibrance_amount: Optional[float] = 0.0,
+              saturation_amount: Optional[float] = 0.0, highlight_amount: Optional[float] = 0.0,
+              shadow_amount: Optional[float] = 0.0, input_gain_factor: Optional[torch.Tensor] = None,
+              input_gtm_params: Optional[torch.Tensor] = None, input_ltm_params: Optional[torch.Tensor] = None,
+              input_chroma_lut: Optional[torch.Tensor] = None, input_gamma_factor: Optional[torch.Tensor] = None,
+              return_params: Optional[bool] = True, gain_blending_weight: Optional[float] = None,
               gtm_blending_weight: Optional[float] = None, ltm_blending_weight: Optional[float] = None,
-              chroma_blending_weight: Optional[float]=None, gamma_blending_weight: Optional[float] = None
+              chroma_blending_weight: Optional[float] = None, gamma_blending_weight: Optional[float] = None
               ) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
     """Forward function of the photofinishing module.
 
@@ -1073,13 +1094,13 @@ class PhotofinishingModule(nn.Module):
     rgb = rgb_prime.clamp(0, 1)
     return rgb.permute(0, 3, 1, 2).clamp(0.0, 1.0)
 
-  def print_num_of_params(self, show_message: Optional[bool]=True) -> str:
+  def print_num_of_params(self, show_message: Optional[bool] = True) -> str:
     """Prints number of parameters in the photofinishing model."""
     gain_num_params = self._gain_net.get_num_of_params()
     gtm_num_params = self._gtm_net.get_num_of_params()
     ltm_num_params = self._ltm_net.get_num_of_params()
     lut_num_params = self._lut_net.get_num_of_params()
-    gamma_num_params =  self._gamma_net.get_num_of_params()
+    gamma_num_params = self._gamma_net.get_num_of_params()
     if self._3d_lut:
       rgb_lut_params = self._3d_lut.get_num_of_params()
     else:
@@ -1124,11 +1145,15 @@ class PhotofinishingModule(nn.Module):
   @staticmethod
   def _apply_3d_lut_on_rgb(rgb: torch.Tensor, lut3d: torch.Tensor) -> torch.Tensor:
     """Applies a 3D LUT on linear RGB input."""
+    run_on_cpu, (rgb, lut3d) = run_on_cpu_if_mps(rgb, lut3d)
+
     grid = rgb.permute(0, 2, 3, 1).unsqueeze(1)
     grid = grid * 2 - 1
     grid = torch.clamp(grid, -1.0, 1.0)
     lut3d = lut3d.expand(rgb.shape[0], -1, -1, -1, -1)
     out = F.grid_sample(lut3d, grid, mode='bilinear', align_corners=True)
+    if run_on_cpu:
+      out = out.to('mps')
     return out.squeeze(2)
 
   @staticmethod
@@ -1164,21 +1189,14 @@ class PhotofinishingModule(nn.Module):
   @staticmethod
   def apply_tm(x: torch.Tensor, a: torch.Tensor, b: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
     """Applies tone mapping."""
-    orig_device = x.device
-    run_on_cpu = orig_device.type == 'mps'
-    if run_on_cpu:
-      x = x.detach().cpu()
-      a = a.detach().cpu()
-      b = b.detach().cpu()
-      c = c.detach().cpu()
-
+    run_on_cpu, (x, a, b, c) = run_on_cpu_if_mps(x, a, b, c)
     x_clamped = x.clamp(EPS, 1.0 - EPS)
     x_a = PhotofinishingModule.safe_pow(x_clamped, a)
     one_minus_x = (1.0 - x_clamped).clamp(EPS, 1.0)
     denom = x_a + PhotofinishingModule.safe_pow(c * one_minus_x, b)
     x_tm = x_a / (denom + EPS)
     if run_on_cpu:
-      x_tm = x_tm.to(orig_device)
+      x_tm = x_tm.to('mps')
     return x_tm
 
   @staticmethod
@@ -1206,9 +1224,13 @@ class PhotofinishingModule(nn.Module):
   @staticmethod
   def _apply_2d_lut_on_cbcr(cbcr: torch.Tensor, lut2d: torch.Tensor) -> torch.Tensor:
     """Applies 2D LuT on CbCr (chroma mapping)."""
+    run_on_cpu, (cbcr, lut2d) = run_on_cpu_if_mps(cbcr, lut2d)
     b, _, h, w = cbcr.shape
     grid = torch.clamp(cbcr, -0.5, 0.5) * 2
     grid = grid.permute(0, 2, 3, 1)
-    return F.grid_sample(lut2d, grid, mode='bilinear', align_corners=True)
+    out = F.grid_sample(lut2d, grid, mode="bilinear", align_corners=True)
 
+    if run_on_cpu:
+      out = out.to('mps')
 
+    return out
