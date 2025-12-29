@@ -8,6 +8,7 @@
 
 - **Executable binaries are now available** for the interactive photo-editing tool.  
   You can download pre-built standalone executables from [here](gui).
+* **2025-12-29**: v0.1.3 (Beta) - Fix Apple ProRAW CCT/Tint validation to avoid false out-of-range errors (source update only; no binaries are provided for v0.1.3).
 * **2025-12-29**: v0.1.2 (Beta) - Added Apple MPS support with automatic CPU fallback for unsupported operators (source update only; training on MPS is not supported, and no binaries are provided for v0.1.2).
 * **2025-12-29**: v0.1.1 (Beta) - Added support for PNG images with alpha channels; improved metadata extraction with a Python fallback when ExifTool is unavailable (source update only; binaries are not available for v0.1.1).
 * **2025-12-12**: Windows (64-bit) - v0.1.0 (Beta)
