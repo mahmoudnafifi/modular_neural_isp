@@ -1512,6 +1512,13 @@ class PipeLine(nn.Module):
                   linearize: Optional[bool] = False) -> Dict[str, Any]:
     """Reads an sRGB JPEG, and if payload is appended after EOI, extract raw, metadata, and editing settings."""
     srgb_img = imread(path)
+    h, w = srgb_img.shape[:2]
+    max_dim = max(h, w)
+    if max_dim < MIN_DIM:
+      scale = MIN_DIM / max_dim
+      new_w = int(round(w * scale))
+      new_h = int(round(h * scale))
+      srgb_img = imresize(srgb_img, height=new_h, width=new_w)
     with open(path, 'rb') as f:
       data = f.read()
 
@@ -1884,3 +1891,4 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
