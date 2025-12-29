@@ -45,7 +45,7 @@ Each package includes **all required dependencies** and runs **without installin
 | Platform | Package | Download | Size | Notes |
 |----------|---------|----------|------|-------|
 | **Windows (64-bit)** | `PhotoEditingTool-v0.1.0-win64.zip` | [📥 Download](https://drive.google.com/file/d/1mU-QjsNUH9SJ-EygelGvenVQCxVsY4D1/view?usp=sharing) | 2.4 GB | Primary development platform. Custom AWB is not available in the prebuilt binary — run the source code if custom AWB functionality is needed. |
-| **macOS (Apple Silicon)** | `PhotoEditingTool-v0.1.0-macos-arm64.zip` | [📥 Download](https://drive.google.com/file/d/19GVPmfVjTFLSG-ezsSKDjuPspApSRubF/view?usp=sharing) | 244 MB | MPS supported, **not performance-optimized**. Custom AWB is not available in the prebuilt binary — run the source code if needed. |
+| **macOS (Apple Silicon)** | `PhotoEditingTool-v0.1.0-macos-arm64.zip` | [📥 Download](https://drive.google.com/file/d/19GVPmfVjTFLSG-ezsSKDjuPspApSRubF/view?usp=sharing) | 244 MB | **MPS is not supported** and performance is **not optimized**. Custom AWB is not available in the prebuilt binary — run the source code if needed. |
 | **Linux** | — | Coming soon | — | — |
 
 
