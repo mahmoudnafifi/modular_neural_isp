@@ -1655,7 +1655,12 @@ class PhotoEditorUI:
     new_device = self._device_setting.get()
     self._update_status(f'Updating device to {new_device}...', erase_after=False)
     if new_device.lower() == 'gpu':
-      self._device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+      if torch.cuda.is_available():
+        self._device = torch.device('cuda')
+      elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        self._device = torch.device('mps')
+      else:
+        self._device = torch.device('cpu')
     else:
       self._device = torch.device('cpu')
 
@@ -2721,6 +2726,7 @@ class PhotoEditorUI:
     x = (w - pil_img.width) // 2
     y = (h - pil_img.height) // 2
     self._canvas.create_image(x, y, anchor="nw", image=self._tk_img)
+
 
 
 
