@@ -17,7 +17,7 @@ This file contains all constant values used in this project.
 """
 
 
-# To install Exiftool:
+# To install Exiftool (optional):
 # 1) pip install PyExifTool
 # 2) sudo apt install libimage-exiftool-perl (for Debian/Ubuntu) Or
 #    sudo pacman -S perl-image-exiftool (for Arch Linux) Or
@@ -36,6 +36,8 @@ elif os_name == 'Darwin':
   EXIFTOOL_PATH = '/usr/local/bin/exiftool' # Update accordingly
 else:
   EXIFTOOL_PATH = '/usr/bin/exiftool'  # Update accordingly
+
+VERSION = 'v0.1.1-beta'
 
 EPS = 0.00000001
 
@@ -262,7 +264,7 @@ METADATA = {
 
 
 ABOUT_MESSAGE = (
-    'This is the user interface for the modular neural ISP\n'
+    f'This is the user interface for the modular neural ISP ({VERSION})\n'
     'presented in the paper:\n\n'
     'Modular Neural Image Signal Processing.\n\n'
     'Developed by:\n'
