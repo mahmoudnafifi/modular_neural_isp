@@ -1382,6 +1382,7 @@ class PipeLine(nn.Module):
 
   def _to_tensor(self, x):
     """Converts numpy to tensor."""
+    x = x.astype(np.float32)
     if len(x.shape) == 3:
       return img_to_tensor(x).unsqueeze(0).to(device=self._device, dtype=torch.float32)
     else:
@@ -1891,5 +1892,6 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
 
