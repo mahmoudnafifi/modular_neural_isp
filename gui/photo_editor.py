@@ -419,7 +419,7 @@ class PhotoEditorUI:
     # Choose default iterations index based on device availability
     default_iter_idx = (
       DEFAULT_BILATERAL_SOLVER_ITERS_GPU_IDX
-      if self._gpu_available
+      if self._gpu_available and torch.cuda.is_available()
       else DEFAULT_BILATERAL_SOLVER_ITERS_CPU_IDX
     )
     default_iters = BILATERAL_SOLVER_ITERS_OPTIONS[default_iter_idx]
@@ -1667,7 +1667,7 @@ class PhotoEditorUI:
     # Chooses correct index based on new setting
     default_iter_idx = (
         DEFAULT_BILATERAL_SOLVER_ITERS_GPU_IDX
-        if new_device == 'gpu' and  torch.cuda.is_available()
+        if new_device == 'gpu' and torch.cuda.is_available()
         else DEFAULT_BILATERAL_SOLVER_ITERS_CPU_IDX
     )
     new_default_iters = BILATERAL_SOLVER_ITERS_OPTIONS[default_iter_idx]
@@ -2726,6 +2726,7 @@ class PhotoEditorUI:
     x = (w - pil_img.width) // 2
     y = (h - pil_img.height) // 2
     self._canvas.create_image(x, y, anchor="nw", image=self._tk_img)
+
 
 
 
