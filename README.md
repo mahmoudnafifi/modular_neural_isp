@@ -8,7 +8,8 @@
 
 - **Executable binaries are now available** for the interactive photo-editing tool.  
   You can download pre-built standalone executables from [here](gui).
-* **2025-12-29**: v0.1.1 (Beta) — Added support for PNG images with alpha channels; improved metadata extraction with a Python fallback when ExifTool is unavailable (source update only; binaries are not available for v0.1.1).
+* **2025-12-29**: v0.1.2 (Beta) - Added Apple MPS support with automatic CPU fallback for unsupported operators (source update only; training on MPS is not supported, and no binaries are provided for v0.1.2).
+* **2025-12-29**: v0.1.1 (Beta) - Added support for PNG images with alpha channels; improved metadata extraction with a Python fallback when ExifTool is unavailable (source update only; binaries are not available for v0.1.1).
 * **2025-12-12**: Windows (64-bit) - v0.1.0 (Beta)
 * **2025-12-14**: macOS (Apple Silicon) - v0.1.0 (Beta)
 
@@ -118,10 +119,15 @@ else:  # Linux
 For console-based rendering of a DNG raw file taken by any camera (or any sRGB image produced by third-party software) refer to the [`main`](main) directory.  
 To launch the interactive photo-editing tool, see the [`gui`](gui) directory.
 
+> **Note:** Inference supports **CUDA, CPU, and Apple MPS**. On MPS, unsupported operators are automatically executed on CPU.
+
+
 ---
 
 ## ⚙️ Training
 To retrain our framework, begin by training the denoiser network (see [`denoising`](denoising) for instructions). Then train the photofinishing module (refer to [`photofinishing`](photofinishing)). Finally, train the detail-enhancement network (see [`enhancement`](enhancement)).
+
+> **Note:** Training is currently supported on **CUDA and CPU only**. Training on Apple MPS is **not supported**.
 
 ---
 
