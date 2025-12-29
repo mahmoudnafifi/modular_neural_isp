@@ -387,6 +387,9 @@ def imread(img_file: str, single_channel: Optional[bool] = False, normalize: Opt
     additional_output = dtype
   else:
     additional_output = None
+  if img.ndim > 2 and img.shape[2] > 3:
+    # Handling PNG images with alpha channels
+    img = img[:, :, 1:]
   return (img, additional_output) if additional_output is not None else img
 
 def img_to_tensor(img):
@@ -833,3 +836,4 @@ def extract_non_overlapping_patches(img: np.ndarray, gt_img: Optional[np.ndarray
       gt_patches.append(resized_gt)
     patches['gt'] = gt_patches
   return patches
+
