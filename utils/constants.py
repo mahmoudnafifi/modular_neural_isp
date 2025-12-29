@@ -43,6 +43,8 @@ EPS = 0.00000001
 
 DEVICES = ['cpu', 'gpu']
 
+MIN_DIM = 2000
+
 LOG_MAX_LENGTH = 400
 
 # AWB
@@ -285,3 +287,4 @@ ABOUT_MESSAGE = (
     '• Raghav Goyal – denoiser experiments\n\n'
     'Inquiries: Mahmoud Afifi (m.3afifi@gmail.com)'
 )
+
