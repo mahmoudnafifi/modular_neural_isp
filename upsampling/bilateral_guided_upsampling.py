@@ -317,8 +317,24 @@ def bgu_slice(gamma: torch.Tensor, input_image: torch.Tensor, guide_image: torch
   grid = grid.unsqueeze(1).expand(B, 1, H, W, 3)  # [B, 1, H, W, 3]
 
   # --- Sample from gamma using grid_sample ---
-  # grid_sample input: [B, C, D, H, W], grid: [B, D_out, H_out, W_out, 3].
-  sampled = F.grid_sample(gamma_reshaped, grid, mode="bilinear", align_corners=True)  # [B, out_ch*in_ch, 1, H, W]
+  # grid_sample input: [B, C, D, H, W], grid: [B, D_out, H_out, W_out, 3]. 
+  try:
+    sampled = F.grid_sample(
+      gamma_reshaped,
+      grid,
+      mode="bilinear",
+      align_corners=True
+    )  # [B, out_ch*in_ch, 1, H, W]
+  except NotImplementedError:
+    if gamma_reshaped.device.type == "mps":
+      sampled = F.grid_sample(
+        gamma_reshaped.cpu(),
+        grid.cpu(),
+        mode="bilinear",
+        align_corners=True
+      ).to(gamma_reshaped.device)
+    else:
+      raise
   sampled = sampled.squeeze(2)  # [B, out_ch*in_ch, H, W]
   sampled = sampled.reshape(B, out_ch, in_ch, H, W)  # [B, out_ch, in_ch, H, W]
   M = sampled.permute(0, 3, 4, 1, 2)  # [B, H, W, out_ch, in_ch]
