@@ -175,7 +175,7 @@ def extract_image_from_dng(file: str) -> np.ndarray:
 
 
 def demosaice(img: np.ndarray, cfa_pattern: str, tile_mode: Optional[bool] = False,
-              tile_size: Optional[int] = 512, overlap: Optional[int] = 16,
+              tile_size: Optional[int] = 256, overlap: Optional[int] = 16,
               num_workers: Optional[int] = 8) -> np.ndarray:
   """Performs image demosaicing to input image.
 
@@ -1009,5 +1009,6 @@ def extract_non_overlapping_patches(img: np.ndarray, gt_img: Optional[np.ndarray
       gt_patches.append(resized_gt)
     patches['gt'] = gt_patches
   return patches
+
 
 
