@@ -8,10 +8,13 @@ This project follows a beta release cycle.
 ## v0.1.5 (Beta) — 2025-12-30
 - Support for Apple Silicon (MPS) during raw-JPEG parameter embedding.
 
+> Windowse (64-bit) and macOS (Apple Silicon) executables were released.
 ---
 
 ## v0.1.4 (Beta) — 2025-12-29
 - Minor performance optimizations for sharpening, saturation, and vibrance adjustments.
+
+> Source update only. No executables were released.
 
 ---
 
@@ -25,9 +28,7 @@ This project follows a beta release cycle.
 ## v0.1.2 (Beta) — 2025-12-29
 - Apple MPS support with automatic CPU fallback for unsupported operators.
 
-### Notes
-- Training on MPS is **not supported**.
-- Source update only. No executables were released.
+> Source update only. No executables were released for this version. Training on MPS is not supported.
 
 ---
 
@@ -41,5 +42,5 @@ This project follows a beta release cycle.
 
 ## v0.1.0 (Beta)
 ### Initial Executable Release
-- Windows (64-bit): 2025-12-12
+- Windowse (64-bit): 2025-12-12
 - macOS (Apple Silicon): 2025-12-14
