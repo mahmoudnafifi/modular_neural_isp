@@ -419,7 +419,7 @@ class LocalToneMappingNet(nn.Module):
           a_map_s = F.interpolate(a_map_s, size=(x.shape[2], x.shape[3]), mode='bilinear', align_corners=True)
         coeffs.append(a_map_s)
       a_map = sum(coeffs) / len(coeffs)
-      with torch.inference_mode():
+      with torch.no_grad():
         a_map = self._bilateral_solver(guide=x, coeff_map=a_map, k=7, sigma_spatial=3.0, sigma_luma=0.008,
                                        lam=5e-4, n_iter=solver_iter, omega=1.6)
     else:
@@ -1211,6 +1211,7 @@ class PhotofinishingModule(nn.Module):
       out = out.to('mps')
 
     return out
+
 
 
 
