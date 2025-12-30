@@ -574,14 +574,15 @@ class PipeLine(nn.Module):
 
         illum = self._cc_awb_model(img_stats['hist_stats'], inference=True)
       illum = illum.to(dtype=raw.dtype)
-      if awb_user_pref:
+      if awb_user_pref and not self._is_apple_pro_raw(img_metadata):
         if 'color_matrix1' in img_metadata:
           with torch.no_grad():
             illum = self._to_tensor(map_illum(self._post_awb_model, self._to_np(illum), img_metadata)
                                     ).to(dtype=raw.dtype)
         else:
           print('Cannot apply AWB preference: missing required metadata.')
-
+      elif awb_user_pref:
+        illum = self._to_tensor(img_metadata['as_shot_neutral']).to(dtype=raw.dtype)
       if report_time:
         awb_time_end = time.perf_counter()
         awb_time = awb_time_end - awb_time_start
@@ -646,13 +647,13 @@ class PipeLine(nn.Module):
           illum_temp = illum
       target_cct, target_tint = cct_tint_from_raw_rgb(illum_temp, xyz2cam1, xyz2cam2, calib_illum_1, calib_illum_2)
       # Constrain CCT/tint values to prevent unnatural color outputs in failure cases
-      if awb_user_pref:
+      if awb_user_pref and not self._is_apple_pro_raw(img_metadata):
         cct_min, cct_max = 2500, 8000
       else:
         cct_min, cct_max = 1500, 9000
-      if target_cct < cct_min or target_cct > cct_max:
+      if target_cct < cct_min or target_cct > cct_max and not self._is_apple_pro_raw(img_metadata):
         target_cct = max(min(target_cct, cct_max), cct_min)
-      if abs(target_tint / TINT_SCALE) > 5 and awb_user_pref:
+      if abs(target_tint / TINT_SCALE) > 5 and awb_user_pref and not self._is_apple_pro_raw(img_metadata):
         target_tint = 5 * TINT_SCALE
       illum = raw_rgb_from_cct_tint(target_cct, target_tint, xyz2cam1, xyz2cam2, calib_illum_1, calib_illum_2)
       illum = self._to_tensor(illum.astype(np.float32)).to(dtype=raw.dtype, device=raw.device)
@@ -1902,6 +1903,7 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
 
 
