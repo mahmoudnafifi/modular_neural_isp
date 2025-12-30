@@ -693,56 +693,42 @@ class PhotofinishingModule(nn.Module):
   def _adjust_vibrance(img: torch.Tensor, amount: float) -> torch.Tensor:
     """Adjust vibrance: boost muted colors more than saturated ones (positive=boost vibrance, negative=reduce)."""
     if amount == 0:
-      return img
-
+        return img
     img = img.clamp(0, 1)
     if img.ndim == 3:
-      img = img.unsqueeze(0)
-
+        img = img.unsqueeze(0)
     r, g, b = img[:, 0], img[:, 1], img[:, 2]
-    maxc, _ = img.max(dim=1)
-    minc, _ = img.min(dim=1)
+    maxc = img.max(dim=1).values
+    minc = img.min(dim=1).values
     deltac = maxc - minc
-
     v = maxc
     s = deltac / (v + EPS)
-
     rc = (v - r) / (deltac + EPS)
     gc = (v - g) / (deltac + EPS)
     bc = (v - b) / (deltac + EPS)
-
     h = torch.zeros_like(v)
-    mask = (maxc == r)
-    h[mask] = (bc - gc)[mask]
-    mask = (maxc == g)
-    h[mask] = 2.0 + (rc - bc)[mask]
-    mask = (maxc == b)
-    h[mask] = 4.0 + (gc - rc)[mask]
+    mask_r = (maxc == r)
+    mask_g = (maxc == g)
+    mask_b = (maxc == b)
+    h[mask_r] = (bc - gc)[mask_r]
+    h[mask_g] = 2.0 + (rc - bc)[mask_g]
+    h[mask_b] = 4.0 + (gc - rc)[mask_b]
     h = (h / 6.0) % 1.0
     s = (s * (1 + amount * (1 - s))).clamp(0, 1)
-    i = torch.floor(h * 6)
-    f = (h * 6) - i
-    i = i.to(torch.int32) % 6
+    h6 = h * 6.0
+    i = torch.floor(h6).to(torch.int64) % 6
+    f = h6 - i
     p = v * (1 - s)
     q = v * (1 - f * s)
     t = v * (1 - (1 - f) * s)
-
-    out = torch.zeros_like(img)
-    for k in range(6):
-      mask = (i == k)
-      if k == 0:
-        out[:, 0][mask], out[:, 1][mask], out[:, 2][mask] = v[mask], t[mask], p[mask]
-      elif k == 1:
-        out[:, 0][mask], out[:, 1][mask], out[:, 2][mask] = q[mask], v[mask], p[mask]
-      elif k == 2:
-        out[:, 0][mask], out[:, 1][mask], out[:, 2][mask] = p[mask], v[mask], t[mask]
-      elif k == 3:
-        out[:, 0][mask], out[:, 1][mask], out[:, 2][mask] = p[mask], q[mask], v[mask]
-      elif k == 4:
-        out[:, 0][mask], out[:, 1][mask], out[:, 2][mask] = t[mask], p[mask], v[mask]
-      elif k == 5:
-        out[:, 0][mask], out[:, 1][mask], out[:, 2][mask] = v[mask], p[mask], q[mask]
-
+    r_c = torch.stack([v, q, p, p, t, v], dim=1)
+    g_c = torch.stack([t, v, v, q, p, p], dim=1)
+    b_c = torch.stack([p, p, t, v, v, q], dim=1)
+    idx = i.unsqueeze(1)
+    r_out = torch.gather(r_c, 1, idx).squeeze(1)
+    g_out = torch.gather(g_c, 1, idx).squeeze(1)
+    b_out = torch.gather(b_c, 1, idx).squeeze(1)
+    out = torch.stack([r_out, g_out, b_out], dim=1)
     return out.clamp(0, 1)
 
   @staticmethod
@@ -1234,3 +1220,4 @@ class PhotofinishingModule(nn.Module):
       out = out.to('mps')
 
     return out
+
