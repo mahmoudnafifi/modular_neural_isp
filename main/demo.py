@@ -332,7 +332,7 @@ if __name__ == '__main__':
     raw_file_name = os.path.join(args.output_dir, f'{basename}-0-in-raw.png')
     imwrite(raw_img, raw_file_name, format='png-16')
 
-  with torch.no_grad():
+  with torch.inference_mode():
     if multi_ps_paths:
       style_gain = []
       style_gtm = []
@@ -460,3 +460,4 @@ if __name__ == '__main__':
     imwrite(outputs['srgb'], os.path.join(dir_path, f'{basename}-output.jpg'), 'JPEG',
 
             quality=DEFAULT_SRGB_JPEG_QUALITY)
+
