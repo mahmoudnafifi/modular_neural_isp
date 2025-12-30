@@ -1810,7 +1810,7 @@ class PipeLine(nn.Module):
     b, _, h, w = x.shape
     device, dtype = x.device, x.dtype
 
-    x_stats = F.interpolate(x, size=(stats_size, stats_size), mode="area")
+    x_stats = F.interpolate(x, size=(stats_size, stats_size), mode="bilinear")
 
     y = PipeLine._rgb_to_luma(x_stats).clamp(EPS, 1.0).view(b, -1)
 
@@ -1899,6 +1899,7 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
 
 
