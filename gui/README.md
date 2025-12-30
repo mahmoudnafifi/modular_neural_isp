@@ -38,6 +38,15 @@ Pre-built standalone executables of the photo-editing tool are available.
 Each package includes **all required dependencies** and runs **without installing Python or external libraries**.
 
 ### Versions
+
+**v0.1.5 (Beta)** 
+
+| Platform | Package | Download | Size | Notes |
+|----------|--------|----------|------|-------|
+| **Windows (64-bit)** | `PhotoEditingTool-v0.1.5-win64.zip` | [📥 Download](https://drive.google.com/file/d/1-AjxoECQ8HureT0zzV5w0C4j5B-yzVR8/view?usp=sharingum) | 2.4 GB | Primary development platform. Supports WB editing for DNG files **when standard metadata is available**. GPU acceleration recommended. |
+| **macOS (Apple Silicon)** | `PhotoEditingTool-v0.1.5-macos-arm64.zip` | [📥 Download](https://drive.google.com/file/d/1ar2lxa_jEu9AzkL3lJhI-bm6MyUL0rCG/view?usp=sharing) | 233 MB | **Partial MPS support** (unsupported operators may fall back to CPU). WB editing for DNGs is supported **only if standard metadata is present**. Performance is not yet optimized.|
+
+
 **v0.1.0 (Beta)**
 
 <div align="center">
@@ -46,7 +55,6 @@ Each package includes **all required dependencies** and runs **without installin
 |----------|---------|----------|------|-------|
 | **Windows (64-bit)** | `PhotoEditingTool-v0.1.0-win64.zip` | [📥 Download](https://drive.google.com/file/d/1mU-QjsNUH9SJ-EygelGvenVQCxVsY4D1/view?usp=sharing) | 2.4 GB | Primary development platform. Custom AWB is not available in the prebuilt binary — run the source code if custom AWB functionality is needed. |
 | **macOS (Apple Silicon)** | `PhotoEditingTool-v0.1.0-macos-arm64.zip` | [📥 Download](https://drive.google.com/file/d/19GVPmfVjTFLSG-ezsSKDjuPspApSRubF/view?usp=sharing) | 244 MB | **MPS is not supported** and performance is **not optimized**. Custom AWB is not available in the prebuilt binary — run the source code if needed. |
-| **Linux** | — | Coming soon | — | — |
 
 
 
@@ -95,8 +103,9 @@ Each package includes **all required dependencies** and runs **without installin
 
 - This is a beta release intended for research and evaluation.
 - The package is large because it bundles deep learning models, the PyTorch runtime, and required native dependencies.
-- Some features (e.g., EXIF metadata extraction) may be skipped automatically if unavailable.
+- White-balance (WB) editing for DNG files is supported only when standard metadata is available. For full support, use the source code; ExifTool is recommended.
 - When running on CPU, performance is expected to be slow. For a better experience, GPU acceleration is recommended.
+- Apple Silicon (MPS) is partially supported --- unsupported operators may fall back to CPU execution.
 - To speed up execution, you can disable the refinement step of local tone mapping and use standard local tone mapping (`Settings → Local Tone Mapping → Standard`).
 - Tested on macOS Sonoma (Apple Silicon) and expected to work on recent macOS versions.
 - The macOS build is not yet performance-optimized, and runtime performance may be slower than on Windows/Linux.
