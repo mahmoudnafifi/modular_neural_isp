@@ -1770,15 +1770,6 @@ class PipeLine(nn.Module):
       radius: blur kernel size
       sigma: blur sigma
     """
-  def _sharpen(img: torch.Tensor, amount, radius: Optional[int]=3, sigma: Optional[float]=1.0) -> torch.Tensor:
-    """Edge-aware sharpening
-
-    Args:
-      img: (1,3,H,W), in [0,1]
-      amount: strength of sharpening
-      radius: blur kernel size
-      sigma: blur sigma
-    """
     c = img.shape[1]
     base = PipeLine._gaussian_blur(img, kernel_size=radius, sigma=sigma)
     detail = img - base
@@ -1908,6 +1899,7 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
 
 
