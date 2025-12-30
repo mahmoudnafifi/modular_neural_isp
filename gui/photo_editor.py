@@ -2491,7 +2491,7 @@ class PhotoEditorUI:
                      gamma_blending_weight: Optional[float]=None
                      ):
     self._synch_log()
-    with torch.inference_mode():
+    with torch.no_grad():
       try:
         outputs = self._pipeline(
           raw=self._raw_img, denoised_raw=self._denoised_raw_img, lsrgb=self._lsrgb_img, illum=illum, ccm=ccm,
@@ -2528,7 +2528,7 @@ class PhotoEditorUI:
     if not prevs or curr_weight >= 0.999:
       return current
     if scale_mode and isinstance(current, torch.Tensor):
-      with torch.inference_mode():
+      with torch.no_grad():
         prev_means = []
         for p in prevs:
           if isinstance(p, np.ndarray):
@@ -2551,7 +2551,7 @@ class PhotoEditorUI:
       if not valid_prev:
         return current
       w_prev = (1 - curr_weight) / len(valid_prev)
-      with torch.inference_mode():
+      with torch.no_grad():
         out = current * curr_weight
         for p in valid_prev:
           out += p * w_prev
@@ -2726,6 +2726,7 @@ class PhotoEditorUI:
     x = (w - pil_img.width) // 2
     y = (h - pil_img.height) // 2
     self._canvas.create_image(x, y, anchor="nw", image=self._tk_img)
+
 
 
 
