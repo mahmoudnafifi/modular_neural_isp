@@ -50,6 +50,10 @@ from utils.vect_utils import min_max_normalization
 
 class PipeLine(nn.Module):
   """Modular neural pipeline."""
+
+  _SOBEL_X = torch.tensor([[-1, 0, 1]], dtype=torch.float32).view(1, 1, 1, 3)
+  _SOBEL_Y = torch.tensor([[-1], [0], [1]], dtype=torch.float32).view(1, 1, 3, 1)
+  
   def __init__(self, denoising_model_path: Optional[str] = None,
                denoising_model_config_path: Optional[str]=None,
                generic_denoising_model_path: Optional[str] = None,
@@ -1766,26 +1770,27 @@ class PipeLine(nn.Module):
       radius: blur kernel size
       sigma: blur sigma
     """
-    # Base layer (smoothed image)
+  def _sharpen(img: torch.Tensor, amount, radius: Optional[int]=3, sigma: Optional[float]=1.0) -> torch.Tensor:
+    """Edge-aware sharpening
+
+    Args:
+      img: (1,3,H,W), in [0,1]
+      amount: strength of sharpening
+      radius: blur kernel size
+      sigma: blur sigma
+    """
+    c = img.shape[1]
     base = PipeLine._gaussian_blur(img, kernel_size=radius, sigma=sigma)
-    detail = img - base  # high-frequency detail
-
-    # Sobel-like gradient kernels -- per channel
-    kx = torch.tensor([[[[-1, 0, 1]]]], dtype=img.dtype, device=img.device)
-    ky = torch.tensor([[[[-1], [0], [1]]]], dtype=img.dtype, device=img.device)
-    kx = kx.repeat(img.shape[1], 1, 1, 1)
-    ky = ky.repeat(img.shape[1], 1, 1, 1)
-
-    grad_x = F.conv2d(img, kx, padding=(0, 1), groups=img.shape[1])
-    grad_y = F.conv2d(img, ky, padding=(1, 0), groups=img.shape[1])
-
-    # Edge-aware mask
-    edge_mag = torch.sqrt(grad_x ** 2 + grad_y ** 2).mean(1, keepdim=True)
-    edge_mask = (edge_mag / (edge_mag.max() + 1e-6)).clamp(0, 1)
-
-    # Weighted sharpening
-    sharpened = img + amount * detail * edge_mask
-    return sharpened.clamp(0, 1)
+    detail = img - base
+    kx = PipeLine._SOBEL_X.to(img.device, img.dtype).repeat(c, 1, 1, 1)
+    ky = PipeLine._SOBEL_Y.to(img.device, img.dtype).repeat(c, 1, 1, 1)
+    grad_x = F.conv2d(img, kx, padding=(0, 1), groups=c)
+    grad_y = F.conv2d(img, ky, padding=(1, 0), groups=c)
+    edge_mag = torch.sqrt(grad_x.mul(grad_x).add_(grad_y.mul(grad_y))).mean(1, keepdim=True)
+    edge_mask = edge_mag / (edge_mag.amax(dim=(2, 3), keepdim=True) + EPS)
+    edge_mask.clamp_(0, 1)
+    out = img + amount * detail * edge_mask
+    return out.clamp_(0, 1)
 
 
   @staticmethod
@@ -1903,6 +1908,7 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
 
 
