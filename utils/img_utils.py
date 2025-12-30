@@ -311,18 +311,18 @@ def raw_to_lsrgb(img: Union[np.ndarray, torch.Tensor],
 
     img_reshaped = img.reshape(-1, 3)
     wb_gain = illum_color[1] / illum_color
-    img_wb = img_reshaped @ np.diag(wb_gain)
-    img_ccm = img_wb @ ccm.T
-    img_out = img_ccm.reshape(img.shape)
+    color_matrix = ccm @ np.diag(wb_gain)
+    img_out = (img_reshaped @ color_matrix.T).reshape(img.shape)
     return np.clip(img_out, 0.0, 1.0)
+
 
   elif isinstance(img, torch.Tensor) and isinstance(illum_color, torch.Tensor) and isinstance(ccm, torch.Tensor):
     b, c, h, w = img.shape
-    wb_gains = illum_color[:, 1].unsqueeze(-1) / (illum_color + EPS)
-    img_wb = img * wb_gains.view(b, 3, 1, 1)
-    img_wb = img_wb.permute(0, 2, 3, 1).reshape(b, -1, 3)
-    img_ccm = torch.bmm(img_wb, ccm.transpose(1, 2))
-    img_out = img_ccm.view(b, h, w, 3).permute(0, 3, 1, 2)
+    wb_gain = illum_color[:, 1].unsqueeze(-1) / (illum_color + EPS)
+    color_matrix = ccm * wb_gain.unsqueeze(1)
+    img_flat = img.permute(0, 2, 3, 1).reshape(b, -1, 3)
+    img_out = torch.bmm(img_flat, color_matrix.transpose(1, 2))
+    img_out = img_out.view(b, h, w, 3).permute(0, 3, 1, 2)
     return torch.clamp(img_out, 0.0, 1.0)
 
   else:
@@ -1009,6 +1009,7 @@ def extract_non_overlapping_patches(img: np.ndarray, gt_img: Optional[np.ndarray
       gt_patches.append(resized_gt)
     patches['gt'] = gt_patches
   return patches
+
 
 
 
