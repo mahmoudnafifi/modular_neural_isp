@@ -580,7 +580,7 @@ class PipeLine(nn.Module):
       illum = illum.to(dtype=raw.dtype)
       if awb_user_pref and not self._is_apple_pro_raw(img_metadata):
         if 'color_matrix1' in img_metadata:
-          with torch.no_grad():
+          with torch.inference_mode():
             illum = self._to_tensor(map_illum(self._post_awb_model, self._to_np(illum), img_metadata)
                                     ).to(dtype=raw.dtype)
         else:
@@ -1032,7 +1032,7 @@ class PipeLine(nn.Module):
           upsampling_time_start = time.perf_counter()
         else:
           upsampling_time_start = 0
-        with torch.no_grad():
+        with torch.inference_mode():
           srgb = self._upsample_model(lsrgb, lsrgb_ds, srgb_ds)
         if report_time:
           upsampling_time_end = time.perf_counter()
@@ -1547,7 +1547,7 @@ class PipeLine(nn.Module):
       if self._linearization_model is not None:
         if log_messages:
           self._log_message('\nLinearizing input sRGB...\n')
-        with torch.no_grad():
+        with torch.inference_mode():
           linearized_img = self._linearization_model(
             self._to_tensor(srgb_img * 0.85).to(device=self._device, dtype=torch.float32))
           linearized_img = self._to_np(linearized_img) * 0.7
@@ -1908,6 +1908,7 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
 
 
