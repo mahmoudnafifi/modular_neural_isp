@@ -520,8 +520,7 @@ class PipeLine(nn.Module):
     if shadow_amount:
       assert -1 <= shadow_amount <= 1.0
 
-    apple_pro_raw = (img_metadata.get('as_shot_neutral')  is not None and
-                     np.allclose(img_metadata.get('as_shot_neutral') , [1.0, 1.0, 1.0]))
+    apple_pro_raw = self._is_apple_pro_raw(img_metadata)
     # Apple ProRAW produces unreliable CCT/Tint values; skip validation
     if not apple_pro_raw:
       if target_cct:
@@ -1355,9 +1354,16 @@ class PipeLine(nn.Module):
     return self._photofinishing_model.get_cbcr_lut_size()
 
   @staticmethod
-  def is_s24_camera(metadata):
+  def is_s24_camera(metadata: Dict[str, Any]) -> bool:
+    """Checks if the input image is from S24 main camera."""
     return PipeLine._is_24_camera(metadata)
 
+  @staticmethod
+  def _is_apple_pro_raw(metadata: Dict[str, Any]) -> bool:
+    """Heuristic check for Apple ProRaw images."""
+    return (metadata.get('as_shot_neutral') is not None and
+            np.allclose(metadata.get('as_shot_neutral'), [1.0, 1.0, 1.0]))
+    
   @staticmethod
   def _is_24_camera(img_metadata: Dict[str, Any]) -> bool:
     """Checks if the input image is from S24 main camera."""
@@ -1896,6 +1902,7 @@ class PipeLine(nn.Module):
       return {'hist_stats': self._to_tensor(hist_stats)}
     else:
       raise ValueError(f'Unsupported model: {model}.')
+
 
 
 
